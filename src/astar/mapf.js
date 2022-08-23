@@ -1,6 +1,13 @@
 import { astar, Graph } from "./astar.js";
 import { ten } from "./graph.js";
 
+/*
+  DECISOES:
+    - numero de objetivos <= a numero de agentes
+    - distribuir aleatoriamente os objetivos
+    - 
+*/
+
 /* 
 - ve essa historia de CBS
 
@@ -14,13 +21,13 @@ import { ten } from "./graph.js";
 
 - colocar mais de um agente
   - testar colisao
+
+- o que fazer quando um agente está parado e bloquendo o objetivo do outro
 */
 
-
+const graph = new Graph(ten)
 
 function test() {
-  const graph = new Graph(ten)
-
   const agents = [
     {
       id: crypto.randomUUID(),
@@ -39,12 +46,9 @@ function test() {
     agent.path = path
   }
 
-  for (let step of agents[0].path) {
-    console.debug(step)
-  }
-  
-
   sim(agents)
+
+  return(agents)
 }
 
 function sim(agentsWithPaths) {
@@ -52,13 +56,15 @@ function sim(agentsWithPaths) {
   let step = 0
 
   while (continueFlag) {
+    continueFlag = false
     let locations = []
+
     for (let agent of agentsWithPaths) {
       if (step < agent.path.length) {
         continueFlag = true
 
         locations.push({
-          agentId: agent.id,
+          id: agent.id,
           position: {
             x: agent.path[step].x,
             y: agent.path[step].y
@@ -66,13 +72,47 @@ function sim(agentsWithPaths) {
         })
       }
     }
+
+    if (conflict(locations)) {
+      console.debug("conflict", locations)
+    }
+
+    step++
   }
 }
 
-// function conflict(agentLocations) {
-//   for (let agent of agentLocations) {
+function conflict(agentLocations) {
+  console.debug("agentLocations", agentLocations)
 
-//   }
-// }
+  for (let agent of agentLocations) {
+    for (let otherAgent of agentLocations) {
+      if (agent.id !== otherAgent.id) {
+        observe(agent, otherAgent)
+      }
+    }
+  }
+}
 
-export { test };
+function observe(agentA, agentB) {
+  // north
+  if (  agentB.position.y === agentA.position.y - 1 &&
+        agentB.position.x === agentA.position.x
+  ) { return 1 }
+
+  // south
+  if (  agentB.position.y === agentA.position.y + 1 && 
+        agentB.position.x === agentA.position.x
+  ) { return 1 }
+
+  // west
+  if (  agentB.position.y === agentA.position.y &&
+        agentB.position.x === agentA.position.x - 1
+  ) { return 1 }
+
+  // east
+  if (  agentB.position.y === agentA.position.y &&
+        agentB.position.x === agentA.position.x + 1
+  ) { return 1 }
+}
+
+export { test, graph };
