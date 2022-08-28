@@ -7,4 +7,42 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
+.empty {
+  width: 30px;
+  height: 30px;
+  margin: 5px;
+
+  background-color: black;
+}
+
+.red {
+  width: 30px;
+  height: 30px;
+  margin: 5px;
+
+  background-color: red;
+}
+
+.green {
+  width: 30px;
+  height: 30px;
+  margin: 5px;
+
+  background-color: green;
 }
