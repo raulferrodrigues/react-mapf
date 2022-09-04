@@ -23,26 +23,8 @@ body {
   flex-direction: row;
 }
 
-.empty {
+.cell {
   width: 30px;
   height: 30px;
   margin: 5px;
-
-  background-color: black;
-}
-
-.red {
-  width: 30px;
-  height: 30px;
-  margin: 5px;
-
-  background-color: red;
-}
-
-.green {
-  width: 30px;
-  height: 30px;
-  margin: 5px;
-
-  background-color: green;
 }
