@@ -89,7 +89,10 @@ function createNewSim(settings) {
   }
 
   // Agentes com os caminhos
-  collisionAvoidance(agents, graph)
+  agents = NaiveCollisionAvoidance(agents, graph)
+
+  console.debug('graph')
+  console.debug(graph.toString())
 
   return video(agents, graph)
 }
@@ -164,7 +167,7 @@ function pathing(agent, graph) {
 }
 
 
-function collisionAvoidance(agentsparam, graphparam) {
+function NaiveCollisionAvoidance(agentsparam, graphparam) {
   // Param hygiene
   const agents = deepcopy(agentsparam)
   const graph = deepcopy(graphparam)
@@ -177,17 +180,59 @@ function collisionAvoidance(agentsparam, graphparam) {
     continueFlag = false
 
     // Check if all agents have reached their destination. If not then set continueFlag to true and keep running the simulation.
+    // Make every node with an agent a wall for this step. Change it back on the end of the step.
     agents.forEach((agent) => {
-      if (step < agent.path.length) { continueFlag = true }
+      if (step < agent.path.length) { 
+        continueFlag = true
+
+        const node = agent.path[step]
+        node.weight = 0
+        console.debug('node', node)
+      }
     })
 
-    if (continueFlag) {
-      const agentsWithCollisions = testCollisions(agents, step)
-      if (agentsWithCollisions.length !== 0) {
-      }
+    if (!continueFlag) { break }
 
+    const agentsWithCollisions = testCollisions(agents, step)
+    if (agentsWithCollisions.length !== 0) {      
+      agentsWithCollisions.forEach((agentWithCollision) => {
+        const { agent, collisions } = agentWithCollision
+        // if this agent will stop and wait for the other agents in the collision to reroute
+        let stop = false
+
+        collisions.forEach(collision => {
+          console.debug('collision', collision)
+          console.debug('agent', agent)
+          if (agent.priority > collision.priority) {
+            stop = true
+          }
+        })
+
+        // if it's a high priority agent in this collision set,
+        // then it should stop and wait while the other agents reroute
+        // otherwise it should reroute 
+        if (stop) {
+          console.debug('stop')
+          const bubble = agent.path[step]
+          agent.path.splice(step + 1, 0, bubble)
+        } 
+
+        else {
+          agent.path.length = step + 1
+          let newPathSegment = []
+          newPathSegment.push(...astar.search(graph, highPriorityAgent.path[step], highPriorityAgent.end, undefined))
+          highPriorityAgent.path.push(...newPathSegment)
+
+        }
+      })
     }
-
+    
+    agents.forEach((agent) => {
+      if (step < agent.path.length) {
+        const node = agent.path[step]
+        node.weight = 1
+      }
+    })
 
     //   for (let collision of agentsWithCollisions) {
     //     let collisionNode
@@ -229,60 +274,41 @@ function collisionAvoidance(agentsparam, graphparam) {
 
     step++
   }
+
+  return agents
 }
 
 function testCollisions(agents, step) {
   let agentsWithCollisions = []
 
-  // Para cada agente
-  // for (let agentWithLocation of agentLocationPairs) {
-  for (let agent of agents) {
-    const collisions = agents
-      .filter(ag => ag !== agent)
-      .map(otherAgent => {
-        const observation = observe(agent.path[step], otherAgent.path[step])
-        if (observation) { return otherAgent }
-      })
+  // Para cada agente (agent)
+  agents
+    .forEach(agent => {
+      const collisions = []
 
-    // Pareando com todos os agentes
-
-    // for (let otherAgentWithLocation of agentLocationPairs) {
-    //   // Se os dois agentes sendo pareados forem difirentes
-    //   if (agentWithLocation.agent.id !== otherAgentWithLocation.agent.id) {
-    //     // Faz os testes de conflito
-    //     const observed = observe(agentWithLocation, otherAgentWithLocation)
-
-
-    //     // Se houver conflitos
-    //     if (observed === 1) {
-
-    //       let skip = false
-    //       // Tenta não colocar conflitos do tipo A | B se ja tem B | A
-    //       for (let collision of otherAgentWithLocation.collisions) {
-    //         if (collision.agent === otherAgentWithLocation && collision.otherAgent === agentWithLocation) {
-    //           skip = true
-    //         }
-    //       }
-
-    //       // Nao coloca duplicatas
-    //       if (!skip) {
-    //         agentsWithConflicts.push(otherAgentWithLocation)
-    //       }
-
-    //       collisions.push(otherAgentWithLocation)
-    //     }
-    //   }
-    // }
-
-    // if (collisions.length > 0) {
-    //   agentsWithCollisions.push({ agent, collisions })
-    // }
-  }
-
+      // Com cada um dos outros agentes
+      agents
+        .filter(ag => ag !== agent)
+        .forEach(otherAgent => {
+          // Observa se há conflito com o agente incial (agent) e o outro agente da lista (otherAgent)
+          // Se sim, adiciona o outro agente (otherAgent) ao array de colisões 
+          console.debug('step', step)
+          const observation = observe(agent.path[step], otherAgent.path[step])
+          if (observation) { collisions.push(otherAgent) }
+        })
+      
+      // Se o tamanho de array de colisões for maior do que zero
+      // Adiciona o agente (agent) ao array de agentes com colisões (agentsWithCollisions) 
+      if (collisions.length > 0) {
+        agentsWithCollisions.push({ agent, collisions })
+      }
+    })
+  
   return agentsWithCollisions
 }
 
 function observe(agentA, agentB) {
+  if (agentA === undefined || agentB === undefined) { return }
   // north
   if (agentB.y === agentA.y &&
     agentB.x === agentA.x + 1
