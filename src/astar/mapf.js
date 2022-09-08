@@ -98,19 +98,6 @@ function createNewSim(settings) {
 }
 
 function video(agents, graph) {
-  // // Roda a simulação
-  // for (let agent of agents) {
-  //   // console.debug(agent.start, agent.end)
-  //   let path = []
-  //   path.push(agent.start)
-  //   path.push(...astar.search(graph, agent.start, agent.end, undefined))
-
-  //   agent.path = path
-  // }
-
-  // // Agentes com os caminhos
-  // let agentsWithPaths = collisionAvoidance(agents)
-
   let frames = []
   let initialFrame = []
 
@@ -167,10 +154,10 @@ function pathing(agent, graph) {
 }
 
 
-function NaiveCollisionAvoidance(agentsparam, graphparam) {
+function NaiveCollisionAvoidance(agents, graph) {
   // Param hygiene
-  const agents = deepcopy(agentsparam)
-  const graph = deepcopy(graphparam)
+  // const agents = deepcopy(agentsparam)
+  // const graph = deepcopy(graphparam)
   // ...
 
   let continueFlag = true
@@ -184,10 +171,8 @@ function NaiveCollisionAvoidance(agentsparam, graphparam) {
     agents.forEach((agent) => {
       if (step < agent.path.length) { 
         continueFlag = true
-
         const node = agent.path[step]
         node.weight = 0
-        console.debug('node', node)
       }
     })
 
@@ -201,8 +186,6 @@ function NaiveCollisionAvoidance(agentsparam, graphparam) {
         let stop = false
 
         collisions.forEach(collision => {
-          console.debug('collision', collision)
-          console.debug('agent', agent)
           if (agent.priority > collision.priority) {
             stop = true
           }
@@ -212,17 +195,14 @@ function NaiveCollisionAvoidance(agentsparam, graphparam) {
         // then it should stop and wait while the other agents reroute
         // otherwise it should reroute 
         if (stop) {
-          console.debug('stop')
           const bubble = agent.path[step]
           agent.path.splice(step + 1, 0, bubble)
         } 
 
         else {
           agent.path.length = step + 1
-          let newPathSegment = []
-          newPathSegment.push(...astar.search(graph, highPriorityAgent.path[step], highPriorityAgent.end, undefined))
-          highPriorityAgent.path.push(...newPathSegment)
-
+          let newPathSegment = astar.search(graph, agent.path[step], agent.end, undefined)
+          agent.path.push(...newPathSegment)
         }
       })
     }
@@ -233,44 +213,6 @@ function NaiveCollisionAvoidance(agentsparam, graphparam) {
         node.weight = 1
       }
     })
-
-    //   for (let collision of agentsWithCollisions) {
-    //     let collisionNode
-    //     let previousCollisionNodeWeight
-
-    //     let highPriorityAgent
-    //     let lowPriorityAgent
-
-    //     console.debug(collision)
-
-    //     for (let collision of collision.collion)
-
-
-
-    //     // Se a prioridade of agent foi maior que a do otherAgent, pausamos o otherAgent
-    //     if (collision.agent.agent.priority > collision.otherAgent.agent.priority) {
-    //       highPriorityAgent = collision.agent.agent
-    //       lowPriorityAgent = collision.otherAgent.agent
-    //     } else {
-    //       highPriorityAgent = collision.otherAgent.agent
-    //       lowPriorityAgent = collision.agent.agent
-    //     }
-
-    //     const bubble = lowPriorityAgent.path[step]
-    //     lowPriorityAgent.path.splice(step + 1, 0, bubble)
-
-    //     collisionNode = getNode(bubble.x, bubble.y, graph)
-    //     previousCollisionNodeWeight = collisionNode.weight
-    //     collisionNode.weight = 0
-
-    //     highPriorityAgent.path.length = step + 1
-    //     let newPathSegment = []
-    //     newPathSegment.push(...astar.search(graph, highPriorityAgent.path[step], highPriorityAgent.end, undefined))
-    //     highPriorityAgent.path.push(...newPathSegment)
-
-    //     collisionNode.weight = previousCollisionNodeWeight
-    //   }
-    
 
     step++
   }
@@ -370,43 +312,6 @@ function observe(agentA, agentB) {
   ) { return 'west+' }
 
   return
-}
-
-// function digest() {
-//   let finalGrid = []
-//   for (let y = 0; y < graphSize; y++) {
-//     let row = []
-//     for (let x = 0; x < graphSize; x++) {
-//       row.push('empty')
-//     }
-//     finalGrid.push(row)
-//   }
-
-//   const agentsWithPaths = test()
-
-//   let continueFlag = true
-//   let step = 0
-//   while (continueFlag) {
-//     continueFlag = false
-
-//     for (let agent of agentsWithPaths) {
-//       if (step < agent.path.length) {
-//         continueFlag = true
-
-//         finalGrid[agent.path[step].y][agent.path[step].x] = agent.color
-//       }
-//     }
-
-//     step++
-//   }
-
-//   return finalGrid
-// }
-
-
-
-function getNode(x, y, graph) {
-  return graph.nodes.find((el) => el.x === x && el.y === y)
 }
 
 export { createNewSim, toySim };

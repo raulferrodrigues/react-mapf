@@ -106,7 +106,7 @@ class App extends Component {
     })
 
     clearInterval(this.interval)
-    this.interval = setInterval(() => this.tick(), 1000)
+    this.interval = setInterval(() => this.tick(), 200)
   }
 
   handleCreateNewSim() {
@@ -121,7 +121,7 @@ class App extends Component {
       frame: this.videoFrames[0]
     })
 
-    this.interval = setInterval(() => this.tick(), 1000)
+    this.interval = setInterval(() => this.tick(), 200)
   }
 
   handleRestartClick() {
