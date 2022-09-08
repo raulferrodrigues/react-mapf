@@ -79,29 +79,38 @@ class App extends Component {
       if (this.state.grid[x][y] === 0) {
         return
       }
-      if (this.state.mode === Mode.creation) {
-        this.currentColor = '#' + Math.floor(Math.random()*16777215).toString(16)
-        let grid = this.state.frame
-        grid[x][y] = this.currentColor 
-  
-        this.setState({ frame: grid, agentStart: { x, y }, mode: Mode.agentStartSelected })
-      }
-  
-      
-  
-      if (this.state.mode === Mode.agentStartSelected) {
-        const agent = {
-          color: this.currentColor,
-          startPoint: this.state.agentStart,
-          endPoint: { x, y },
+
+      const index = this.state.agents.findIndex(agent => agent.startPoint.x === x && agent.startPoint.y === y)
+
+      if (index !== -1) {
+        let agents = this.state.agents
+        console.log(agents)
+        agents = agents.splice(index, 1)
+        console.log(agents)
+        this.setState({ agents })
+      } else {
+        if (this.state.mode === Mode.creation) {
+          this.currentColor = '#' + Math.floor(Math.random()*16777215).toString(16)
+          let grid = this.state.frame
+          grid[x][y] = this.currentColor 
+    
+          this.setState({ frame: grid, agentStart: { x, y }, mode: Mode.agentStartSelected })
         }
   
-        
-        let agents = this.state.agents
-        agents.push(agent)
-  
-        this.setState({ ...this.state, agents, mode: Mode.creation })
+        if (this.state.mode === Mode.agentStartSelected) {
+          const agent = {
+            color: this.currentColor,
+            startPoint: this.state.agentStart,
+            endPoint: { x, y },
+          }
+    
+          let agents = this.state.agents
+          agents.push(agent)
+    
+          this.setState({ ...this.state, agents, mode: Mode.creation })
+        }
       }
+      
     } else if (e.nativeEvent.which === 3) {
       if (this.state.grid[x][y] === 1) {
         let grid = this.state.grid
