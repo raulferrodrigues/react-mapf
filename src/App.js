@@ -16,6 +16,7 @@ class App extends Component {
     this.state = {
       mode: Mode.creation,
       agents: [],
+      grid: toyGrid,
       frame: [
         ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
         ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
@@ -61,7 +62,7 @@ class App extends Component {
   grid() {
     const listItems = this.state.frame.map((row, x) => {
       const rowItems = row.map((cell, y) => {
-        return <span style={{backgroundColor: cell}} className={'cell'} key={y} onClick={((e) => this.handleCellClick(e, x, y))}></span>
+        return <span style={{backgroundColor: this.state.grid[x][y] === 0 ? "gray" : cell}} className={'cell'} key={y} onClick={((e) => this.handleCellClick(e, x, y))} onContextMenu={(e) => this.handleCellClick(e, x, y)}></span>
       })
 
       const rowDiv = <div key={x} className="row">{rowItems}</div>
@@ -72,28 +73,45 @@ class App extends Component {
   }
 
   handleCellClick(e, x, y) {
-    if (this.state.mode === Mode.creation) {
-      this.currentColor = '#' + Math.floor(Math.random()*16777215).toString(16)
-      let grid = this.state.frame
-      grid[x][y] = this.currentColor 
-
-      this.setState({ frame: grid, agentStart: { x, y }, mode: Mode.agentStartSelected })
-    }
-
+    e.preventDefault()
     
-
-    if (this.state.mode === Mode.agentStartSelected) {
-      const agent = {
-        color: this.currentColor,
-        startPoint: this.state.agentStart,
-        endPoint: { x, y },
+    if (e.nativeEvent.which === 1) {
+      if (this.state.grid[x][y] === 0) {
+        return
       }
-
+      if (this.state.mode === Mode.creation) {
+        this.currentColor = '#' + Math.floor(Math.random()*16777215).toString(16)
+        let grid = this.state.frame
+        grid[x][y] = this.currentColor 
+  
+        this.setState({ frame: grid, agentStart: { x, y }, mode: Mode.agentStartSelected })
+      }
+  
       
-      let agents = this.state.agents
-      agents.push(agent)
-
-      this.setState({ ...this.state, agents, mode: Mode.creation })
+  
+      if (this.state.mode === Mode.agentStartSelected) {
+        const agent = {
+          color: this.currentColor,
+          startPoint: this.state.agentStart,
+          endPoint: { x, y },
+        }
+  
+        
+        let agents = this.state.agents
+        agents.push(agent)
+  
+        this.setState({ ...this.state, agents, mode: Mode.creation })
+      }
+    } else if (e.nativeEvent.which === 3) {
+      if (this.state.grid[x][y] === 1) {
+        let grid = this.state.grid
+        grid[x][y] = 0
+        this.setState({ grid })
+      } else {
+        let grid = this.state.grid
+        grid[x][y] = 1
+        this.setState({ grid })
+      }
     }
   }
 
@@ -111,7 +129,7 @@ class App extends Component {
 
   handleCreateNewSim() {
     const settings = {
-      grid: toyGrid,
+      grid: this.state.grid,
       agents: this.state.agents
     }
 
