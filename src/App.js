@@ -9,6 +9,8 @@ const Mode = {
   agentStartSelected: 3,
 }
 
+const tick = 200
+
 class App extends Component {
 
   constructor(props) {
@@ -73,6 +75,8 @@ class App extends Component {
   }
 
   handleCellClick(e, x, y) {
+    console.log('before', this.state.agents)
+
     e.preventDefault()
     
     if (e.nativeEvent.which === 1) {
@@ -83,11 +87,10 @@ class App extends Component {
       const index = this.state.agents.findIndex(agent => agent.startPoint.x === x && agent.startPoint.y === y)
 
       if (index !== -1) {
-        let agents = this.state.agents
-        console.log(agents)
-        agents = agents.splice(index, 1)
-        console.log(agents)
-        this.setState({ agents })
+        return
+        // let agents = this.state.agents
+        // agents.splice(index, 1)
+        // this.setState({ agents })
       } else {
         if (this.state.mode === Mode.creation) {
           this.currentColor = '#' + Math.floor(Math.random()*16777215).toString(16)
@@ -124,19 +127,30 @@ class App extends Component {
     }
   }
 
-  handleHeyo() {
-    this.videoFrames = toySim()
-
+  handlerReset() {
     this.frameCount = 0
     this.setState({
-      frame: this.videoFrames[0]
+      mode: Mode.creation,
+      agents: [],
+      grid: toyGrid,
+      frame: [
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
+      ],
     })
 
     clearInterval(this.interval)
-    this.interval = setInterval(() => this.tick(), 200)
   }
 
-  handleCreateNewSim() {
+  handleRun() {
     const settings = {
       grid: this.state.grid,
       agents: this.state.agents
@@ -148,7 +162,7 @@ class App extends Component {
       frame: this.videoFrames[0]
     })
 
-    this.interval = setInterval(() => this.tick(), 200)
+    this.interval = setInterval(() => this.tick(), tick)
   }
 
   handleRestartClick() {
@@ -158,7 +172,7 @@ class App extends Component {
     })
 
     clearInterval(this.interval)
-    this.interval = setInterval(() => this.tick(), 1000)
+    this.interval = setInterval(() => this.tick(), tick)
   }
 
   render() {
@@ -167,9 +181,9 @@ class App extends Component {
         <div key='grid' className="grid">
           {this.grid()}
         </div>
-        <button key='start' onClick={() => this.handleHeyo()}>heyo</button>
-        <button key='create' onClick={() => this.handleCreateNewSim()}>Create new map</button>
+        <button key='run' onClick={() => this.handleRun()}>Run</button>
         <button key='restart' onClick={() => this.handleRestartClick()}>Restart</button>
+        <button key='reset' onClick={() => this.handlerReset()}>Reset</button>
       </div>
     );
   }
