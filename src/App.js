@@ -1,6 +1,7 @@
 import React, { Component } from "react";
+import axios from "axios";
 import { toyGrid } from "./astar/examples/grids";
-import { createNewSim, toySim } from "./astar/mapf"
+import { createNewSim, toySim } from "./astar/mapf";
 
 const Mode = {
   idle: 0,
@@ -175,13 +176,50 @@ class App extends Component {
     this.interval = setInterval(() => this.tick(), tick)
   }
 
+  handleCbs() {
+    const payload = {
+      "agents": [],
+      "map": {
+        "dimensions": [10, 10],
+        "obstacles": []
+      }
+    }
+
+    this.state.agents.forEach(agent => {
+      payload.agents.push({
+        "start": [agent.startPoint.x, agent.startPoint.y],
+        "goal": [agent.endPoint.x, agent.endPoint.y],
+        "name": agent.color
+      })
+    })
+
+    this.state.grid.forEach((row, rowIndex) => {
+      row.forEach((cell, cellIndex) => {
+        if (cell === 0) {
+          payload.map.obstacles.push([rowIndex, cellIndex])
+        }
+      })
+    })
+
+    fetch("http://localhost:8080", {
+      credentials: 'omit',
+      method: "POST",
+      body: JSON.stringify(payload),
+      mode: 'cors'
+    })
+    .then((res) => res.json())
+    .then((data) => { console.log(data) })
+    .catch((res) => { console.log(res) })
+  }
+
   render() {
     return (
       <div key='top'>
         <div key='grid' className="grid">
           {this.grid()}
         </div>
-        <button key='run' onClick={() => this.handleRun()}>Run</button>
+        <button key='naive' onClick={() => this.handleRun()}>Run Naive Search</button>
+        <button key='cbs' onClick={() => this.handleCbs()}>Run CBS</button>
         <button key='restart' onClick={() => this.handleRestartClick()}>Restart</button>
         <button key='reset' onClick={() => this.handlerReset()}>Reset</button>
       </div>

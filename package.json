@@ -8,6 +8,7 @@
   },
   "homepage": "https://arnab-datta.github.io/counter-app",
   "dependencies": {
+    "axios": "^0.27.2",
     "bootstrap": "^4.6.0",
     "deepcopy": "^2.1.0",
     "font-awesome": "^4.7.0",
