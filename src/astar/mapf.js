@@ -103,7 +103,7 @@ function video(agents, graph) {
 
   frames.push(initialFrame)
 
-  // Produz of frame inicial
+  // Produz of frame base
   for (let x = 0; x < graph.grid.length; x++) {
     let column = []
     for (let y = 0; y < graph.grid.length; y++) {
@@ -117,8 +117,6 @@ function video(agents, graph) {
   let step = 0
   let lastFrame = deepcopy(initialFrame)
 
-
-
   // Produz o video
   while (continueFlag) {
     continueFlag = false
@@ -131,6 +129,52 @@ function video(agents, graph) {
 
         // fazer novo frame
         newFrame[agent.path[step].x][agent.path[step].y] = agent.color
+      }
+    }
+
+    frames.push(newFrame)
+    lastFrame = newFrame
+
+    step++
+  }
+
+  return frames
+}
+
+function videoCBS(data, grid) {
+  console.debug('heyo')
+
+  let frames = []
+  let initialFrame = []
+
+  frames.push(initialFrame)
+
+  // Produz of frame base
+  for (let x = 0; x < grid.length; x++) {
+    let column = []
+    for (let y = 0; y < grid.length; y++) {
+      column.push('black')
+    }
+    initialFrame.push(column)
+  }
+
+  // Estruturas para produzir o video
+  let continueFlag = true
+  let step = 0
+  let lastFrame = deepcopy(initialFrame)
+
+  // Produz o video
+  while (continueFlag) {
+    continueFlag = false
+    let newFrame = deepcopy(initialFrame)
+
+    for (const agent in data) {
+      if (agent && step < data[agent].length) {
+        continueFlag = true
+
+        // fazer novo frame
+        newFrame[data[agent][step].x][data[agent][step].y] = agent
+
       }
     }
 
@@ -314,4 +358,4 @@ function observe(agentA, agentB) {
   return
 }
 
-export { createNewSim, toySim };
+export { createNewSim, videoCBS };

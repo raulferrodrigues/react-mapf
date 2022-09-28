@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import axios from "axios";
 import { toyGrid } from "./astar/examples/grids";
-import { createNewSim, toySim } from "./astar/mapf";
+import { createNewSim, videoCBS } from "./astar/mapf";
 
 const Mode = {
   idle: 0,
@@ -10,7 +10,7 @@ const Mode = {
   agentStartSelected: 3,
 }
 
-const tick = 200
+const tick = 800
 
 class App extends Component {
 
@@ -208,8 +208,24 @@ class App extends Component {
       mode: 'cors'
     })
     .then((res) => res.json())
-    .then((data) => { console.log(data) })
+    .then((data) => {
+      console.debug("heyo heyo")
+      this.pythonTranslate(data)
+    })
     .catch((res) => { console.log(res) })
+  }
+
+  pythonTranslate(data) {
+
+    console.debug(videoCBS(data, this.state.grid))
+
+    this.videoFrames = videoCBS(data, this.state.grid)
+    this.frameCount = 0
+    this.setState({
+      frame: this.videoFrames[0]
+    })
+
+    this.interval = setInterval(() => this.tick(), tick)
   }
 
   render() {
