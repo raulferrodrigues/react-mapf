@@ -1,7 +1,11 @@
+import deepcopy from "deepcopy";
 import React, { Component } from "react";
-import axios from "axios";
-import { toyGrid } from "./astar/examples/grids";
+import { emptyGrid } from "./astar/examples/grids";
 import { createNewSim, videoCBS } from "./astar/mapf";
+import { colors, emptyFrame } from "./aux";
+import Grid from "./components/Grid";
+
+const tick = 500
 
 const Mode = {
   idle: 0,
@@ -10,29 +14,32 @@ const Mode = {
   agentStartSelected: 3,
 }
 
-const tick = 800
+const cleanSettings = {
+  mode: Mode.creation,
+  frame: emptyFrame,
+  grid: emptyGrid,
+  agents: [],
+  obstacles: [],
+  video: [],
+  frameCount: 0
+}
 
 class App extends Component {
 
   constructor(props) {
     super(props)
-    this.state = {
-      mode: Mode.creation,
-      agents: [],
-      grid: toyGrid,
-      frame: [
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-      ],
-    }
+
+    this.mode = Mode.creation
+    this.grid = emptyGrid
+    this.currentAgent = null
+    this.agents = []
+    this.obstacles = []
+    this.video = []
+    this.frameCount = 0
+
+    this.state = cleanSettings
+
+    document.addEventListener("contextmenu", (event) => { event.preventDefault() })
   }
 
   componentWillUnmount() {
@@ -40,202 +47,195 @@ class App extends Component {
   }
 
   componentDidMount() {
-    
+
   }
-  
+
   tick() {
-    if (this.frameCount < this.videoFrames.length - 1) {
+    console.debug(this.video.length)
+
+    if (this.frameCount < this.video.length - 1) {
       this.frameCount++
 
       this.setState({
-        frame: this.videoFrames[this.frameCount],
-        frameCount: this.frameCount
+        frame: this.video[this.frameCount],
       })
     } else {
-
       this.setState({
-        frame: this.videoFrames[this.videoFrames.length - 1],
-        frameCount: this.frameCount
+        frame: this.video[this.video.length - 1]
       })
-      
+
       clearInterval(this.interval)
-    }    
+    }
   }
 
-  grid() {
-    const listItems = this.state.frame.map((row, x) => {
-      const rowItems = row.map((cell, y) => {
-        return <span style={{backgroundColor: this.state.grid[x][y] === 0 ? "gray" : cell}} className={'cell'} key={y} onClick={((e) => this.handleCellClick(e, x, y))} onContextMenu={(e) => this.handleCellClick(e, x, y)}></span>
-      })
+  buildFrame() {    
+    const frame = deepcopy(emptyFrame)
 
-      const rowDiv = <div key={x} className="row">{rowItems}</div>
-      return rowDiv
+    if (this.currentAgent) {
+      const { color, startPoint } = this.currentAgent
+      frame[startPoint.x][startPoint.y] = { type: 'start', color: color }
+    }
+
+    this.agents.forEach(agent => {
+      const { startPoint, endPoint, color } = agent
+      frame[startPoint.x][startPoint.y] = { type: 'start', color: color }
+      frame[endPoint.x][endPoint.y] = { type: 'end', color: color }
     })
 
-    return listItems
+    this.obstacles.forEach(obstacle => {
+      frame[obstacle.x][obstacle.y] = { type: 'obstacle', color: 'dimgrey' }
+    })
+
+    this.setState({ frame })
   }
 
-  handleCellClick(e, x, y) {
-    console.log('before', this.state.agents)
+  handleAgent(x, y) {
+    if (this.obstacles.filter(e => e.x === x && e.y === y).length !== 0) return
+    if (this.agents.filter(e => e.startPoint.x === x && e.startPoint.y === y).length !== 0) return
+    if (this.agents.filter(e => e.endPoint.x === x && e.endPoint.y === y).length !== 0) return
 
-    e.preventDefault()
-    
-    if (e.nativeEvent.which === 1) {
-      if (this.state.grid[x][y] === 0) {
-        return
-      }
-
-      const index = this.state.agents.findIndex(agent => agent.startPoint.x === x && agent.startPoint.y === y)
-
-      if (index !== -1) {
-        return
-        // let agents = this.state.agents
-        // agents.splice(index, 1)
-        // this.setState({ agents })
-      } else {
-        if (this.state.mode === Mode.creation) {
-          this.currentColor = '#' + Math.floor(Math.random()*16777215).toString(16)
-          let grid = this.state.frame
-          grid[x][y] = this.currentColor 
-    
-          this.setState({ frame: grid, agentStart: { x, y }, mode: Mode.agentStartSelected })
+    if (this.mode === Mode.creation) {
+        this.mode = Mode.agentStartSelected
+        this.currentAgent = { 
+          color: colors[Math.floor(Math.random() * colors.length)],
+          startPoint: { x, y }
         }
-  
-        if (this.state.mode === Mode.agentStartSelected) {
-          const agent = {
-            color: this.currentColor,
-            startPoint: this.state.agentStart,
-            endPoint: { x, y },
-          }
-    
-          let agents = this.state.agents
-          agents.push(agent)
-    
-          this.setState({ ...this.state, agents, mode: Mode.creation })
-        }
+    } else
+
+    if (this.mode === Mode.agentStartSelected) {
+      const agent = {
+        ...this.currentAgent,
+        endPoint: { x, y },
       }
       
-    } else if (e.nativeEvent.which === 3) {
-      if (this.state.grid[x][y] === 1) {
-        let grid = this.state.grid
-        grid[x][y] = 0
-        this.setState({ grid })
-      } else {
-        let grid = this.state.grid
-        grid[x][y] = 1
-        this.setState({ grid })
-      }
+      this.agents.push(agent)
+      this.mode = Mode.creation
+      this.currentAgent = null
     }
+
+    console.debug(this.agents)
+    this.buildFrame()
+  }
+
+  handleObstacle(x, y) {
+    console.debug(x, y)
+
+    if (this.obstacles.filter(e => e.x === x && e.y === y).length !== 0)
+
+      this.obstacles = this.obstacles.filter(e => e.x !== x || e.y !== y)
+    else
+      this.obstacles.push({ x, y })
+
+    this.buildFrame()
   }
 
   handlerReset() {
     this.frameCount = 0
-    this.setState({
-      mode: Mode.creation,
-      agents: [],
-      grid: toyGrid,
-      frame: [
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-        ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black',],
-      ],
-    })
+    this.setState(cleanSettings)
 
     clearInterval(this.interval)
   }
 
   handleRun() {
+    const grid = deepcopy(emptyGrid)
+
+    this.obstacles.forEach(obstacle => {
+      grid[obstacle.x][obstacle.y] = 0
+    })
+
     const settings = {
-      grid: this.state.grid,
-      agents: this.state.agents
+      grid: grid,
+      agents: this.agents
     }
 
-    this.videoFrames = createNewSim(settings)
+    this.video = createNewSim(settings)
     this.frameCount = 0
-    this.setState({
-      frame: this.videoFrames[0]
-    })
+
+    this.setState({ frame: this.video[0] })
 
     this.interval = setInterval(() => this.tick(), tick)
   }
 
   handleRestartClick() {
-    this.frameCount = 0
     this.setState({
-      frame: this.videoFrames[0]
+      frame: this.video[0],
+      frameCount: 0
     })
 
     clearInterval(this.interval)
     this.interval = setInterval(() => this.tick(), tick)
   }
 
-  handleCbs() {
-    const payload = {
-      "agents": [],
-      "map": {
-        "dimensions": [10, 10],
-        "obstacles": []
-      }
-    }
+  // handleCbs() {
+  //   const payload = {
+  //     "agents": [],
+  //     "map": {
+  //       "dimensions": [10, 10],
+  //       "obstacles": []
+  //     }
+  //   }
 
-    this.state.agents.forEach(agent => {
-      payload.agents.push({
-        "start": [agent.startPoint.x, agent.startPoint.y],
-        "goal": [agent.endPoint.x, agent.endPoint.y],
-        "name": agent.color
-      })
-    })
+  //   this.state.agents.forEach(agent => {
+  //     payload.agents.push({
+  //       "start": [agent.startPoint.x, agent.startPoint.y],
+  //       "goal": [agent.endPoint.x, agent.endPoint.y],
+  //       "name": agent.color
+  //     })
+  //   })
 
-    this.state.grid.forEach((row, rowIndex) => {
-      row.forEach((cell, cellIndex) => {
-        if (cell === 0) {
-          payload.map.obstacles.push([rowIndex, cellIndex])
-        }
-      })
-    })
+  //   this.state.grid.forEach((row, rowIndex) => {
+  //     row.forEach((cell, cellIndex) => {
+  //       if (cell === 0) {
+  //         payload.map.obstacles.push([rowIndex, cellIndex])
+  //       }
+  //     })
+  //   })
 
-    fetch("http://localhost:8080", {
-      credentials: 'omit',
-      method: "POST",
-      body: JSON.stringify(payload),
-      mode: 'cors'
-    })
-    .then((res) => res.json())
-    .then((data) => {
-      console.debug("heyo heyo")
-      this.pythonTranslate(data)
-    })
-    .catch((res) => { console.log(res) })
-  }
+  //   fetch("http://localhost:8080", {
+  //     credentials: 'omit',
+  //     method: "POST",
+  //     body: JSON.stringify(payload),
+  //     mode: 'cors'
+  //   })
+  //   .then((res) => res.json())
+  //   .then((data) => {
+  //     console.debug("heyo heyo")
+  //     this.pythonTranslate(data)
+  //   })
+  //   .catch((res) => { console.log(res) })
+  // }
 
-  pythonTranslate(data) {
+  // pythonTranslate(data) {
 
-    console.debug(videoCBS(data, this.state.grid))
+  //   console.debug(videoCBS(data, this.state.grid))
 
-    this.videoFrames = videoCBS(data, this.state.grid)
-    this.frameCount = 0
-    this.setState({
-      frame: this.videoFrames[0]
-    })
+  //   this.videoFrames = videoCBS(data, this.state.grid)
+  //   this.frameCount = 0
+  //   this.setState({
+  //     frame: this.videoFrames[0]
+  //   })
 
-    this.interval = setInterval(() => this.tick(), tick)
-  }
+  //   this.interval = setInterval(() => this.tick(), tick)
+  // }
 
   render() {
     return (
-      <div key='top'>
-        <div key='grid' className="grid">
-          {this.grid()}
+      <div key='canvas'>
+        <div key='topbar'>
+          <label className="switch">
+            <input type="checkbox"></input>
+            <span className="slider round"></span>
+          </label>
         </div>
-        <button key='naive' onClick={() => this.handleRun()}>Run Naive Search</button>
-        <button key='cbs' onClick={() => this.handleCbs()}>Run CBS</button>
+
+        <Grid 
+          key='grid'
+          frame={this.state.frame} 
+          handleAgent={this.handleAgent.bind(this)} 
+          handleObstacle={this.handleObstacle.bind(this)}></Grid>
+
+        <button key='run-naive' onClick={() => this.handleRun()}>Run Naive Search</button>
+        {/* <button key='cbs' onClick={() => this.handleCbs()}>Run CBS</button> */}
         <button key='restart' onClick={() => this.handleRestartClick()}>Restart</button>
         <button key='reset' onClick={() => this.handlerReset()}>Reset</button>
       </div>

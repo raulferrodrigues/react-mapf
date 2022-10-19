@@ -23,8 +23,3 @@ body {
   flex-direction: row;
 }
 
-.cell {
-  width: 30px;
-  height: 30px;
-  margin: 5px;
-}

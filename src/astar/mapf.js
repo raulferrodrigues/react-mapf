@@ -2,7 +2,6 @@
 import { astar, Graph } from './astar.js';
 import { toySettings } from './examples/simSettings.js';
 import * as deepcopy from 'deepcopy';
-import { map } from 'jquery';
 
 /*
   DECISOES:
@@ -94,20 +93,23 @@ function createNewSim(settings) {
   console.debug('graph')
   console.debug(graph.toString())
 
-  return video(agents, graph)
+  return videoNCA(agents, graph)
 }
 
-function video(agents, graph) {
+function videoNCA(agents, graph) {
   let frames = []
   let initialFrame = []
 
   frames.push(initialFrame)
 
+  console.debug(graph)
+
   // Produz of frame base
   for (let x = 0; x < graph.grid.length; x++) {
     let column = []
     for (let y = 0; y < graph.grid.length; y++) {
-      column.push('black')
+      if (graph.grid[x][y].weight === 0) { column.push({ type: 'obstacle', color: 'dimgrey' }) }
+      else { column.push({ type: 'empty', color: 'black' }) }
     }
     initialFrame.push(column)
   }
@@ -128,7 +130,7 @@ function video(agents, graph) {
         continueFlag = true
 
         // fazer novo frame
-        newFrame[agent.path[step].x][agent.path[step].y] = agent.color
+        newFrame[agent.path[step].x][agent.path[step].y] = { type: 'agent', color: agent.color }
       }
     }
 
@@ -142,8 +144,6 @@ function video(agents, graph) {
 }
 
 function videoCBS(data, grid) {
-  console.debug('heyo')
-
   let frames = []
   let initialFrame = []
 
@@ -153,7 +153,8 @@ function videoCBS(data, grid) {
   for (let x = 0; x < grid.length; x++) {
     let column = []
     for (let y = 0; y < grid.length; y++) {
-      column.push('black')
+      if (grid[x][y] === 0) column.push('dimgrey')
+      else column.push('black')
     }
     initialFrame.push(column)
   }
