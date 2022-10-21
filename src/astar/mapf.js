@@ -2,6 +2,7 @@
 import { astar, Graph } from './astar.js';
 import { toySettings } from './examples/simSettings.js';
 import * as deepcopy from 'deepcopy';
+import { CellType } from '../Aux.js';
 
 /*
   DECISOES:
@@ -130,7 +131,7 @@ function videoNCA(agents, graph) {
         continueFlag = true
 
         // fazer novo frame
-        newFrame[agent.path[step].x][agent.path[step].y] = { type: 'agent', color: agent.color }
+        newFrame[agent.path[step].x][agent.path[step].y] = { type: CellType.start, color: agent.color }
       }
     }
 

@@ -2,7 +2,7 @@ import deepcopy from "deepcopy";
 import React, { Component } from "react";
 import { emptyGrid } from "./astar/examples/grids";
 import { createNewSim, videoCBS } from "./astar/mapf";
-import { colors, emptyFrame } from "./aux";
+import { colors, emptyFrame, CellType } from "./Aux";
 import Grid from "./components/Grid";
 
 const tick = 500
@@ -51,7 +51,7 @@ class App extends Component {
   }
 
   tick() {
-    console.debug(this.video.length)
+    console.debug(this.frameCount)
 
     if (this.frameCount < this.video.length - 1) {
       this.frameCount++
@@ -73,17 +73,17 @@ class App extends Component {
 
     if (this.currentAgent) {
       const { color, startPoint } = this.currentAgent
-      frame[startPoint.x][startPoint.y] = { type: 'start', color: color }
+      frame[startPoint.x][startPoint.y] = { type: CellType.start, color: color }
     }
 
     this.agents.forEach(agent => {
       const { startPoint, endPoint, color } = agent
-      frame[startPoint.x][startPoint.y] = { type: 'start', color: color }
-      frame[endPoint.x][endPoint.y] = { type: 'end', color: color }
+      frame[startPoint.x][startPoint.y] = { type: CellType.start, color: color }
+      frame[endPoint.x][endPoint.y] = { type: CellType.end, color: color }
     })
 
     this.obstacles.forEach(obstacle => {
-      frame[obstacle.x][obstacle.y] = { type: 'obstacle', color: 'dimgrey' }
+      frame[obstacle.x][obstacle.y] = { type: CellType.obstacle, color: 'dimgrey' }
     })
 
     this.setState({ frame })
@@ -157,12 +157,11 @@ class App extends Component {
   }
 
   handleRestartClick() {
-    this.setState({
-      frame: this.video[0],
-      frameCount: 0
-    })
-
     clearInterval(this.interval)
+
+    this.frameCount = 0
+    this.setState({ frame: this.video[0] })
+
     this.interval = setInterval(() => this.tick(), tick)
   }
 

@@ -1,14 +1,7 @@
 import React, { Component } from "react";
 import Cell from "./Cell";
 
-
-
 class Grid extends Component {
-  frameTranslate(frame) {
-    
-    
-  }
-
   render() {
     const { frame, handleAgent, handleObstacle } = this.props
     
