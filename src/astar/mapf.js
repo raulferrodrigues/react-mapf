@@ -132,6 +132,8 @@ function videoNCA(agents, graph) {
 
         // fazer novo frame
         newFrame[agent.path[step].x][agent.path[step].y] = { type: CellType.start, color: agent.color }
+        newFrame[agent.end.x][agent.end.y] = { type: CellType.end, color: agent.color }
+        console.log(agent)
       }
     }
 
